@@ -55,21 +55,27 @@ static void OnFrame(const LEAP_TRACKING_EVENT* frame) {
         LEAP_HAND* hand = &frame->pHands[h];
         struct timeval ts;
         gettimeofday(&ts, NULL); // return value can be ignored
-        printf("Timestamp : %ld sec %ld usec\n", ts.tv_sec, ts.tv_usec);
-        printf("Hand id %i: %s\n",
+        fprintf(logFile, "Timestamp : %ld sec %ld usec\n", ts.tv_sec, ts.tv_usec);
+        fprintf(logFile, "Hand id %i: %s\n",
             hand->id,
             (hand->type == eLeapHandType_Left ? "left" : "right"));
-        printf("Palm: %f, %f, %f\n",
+        fprintf(logFile, "Palm: %f, %f, %f\n",
             hand->palm.position.x,
             hand->palm.position.y,
             hand->palm.position.z);
-        printf("Arm: %f, %f, %f, %f, %f, %f\n",
+        fprintf(logFile, "Index: %f, %f, %f\n",
+            hand->index.distal.next_joint.x,
+            hand->index.distal.next_joint.y,
+            hand->index.distal.next_joint.z);
+        /*
+        fprintf(logFile, "Arm: %f, %f, %f, %f, %f, %f\n",
             hand->arm.prev_joint.x,
             hand->arm.prev_joint.y,
             hand->arm.prev_joint.z,
             hand->arm.next_joint.x,
             hand->arm.next_joint.y,
             hand->arm.next_joint.z);
+        */
     }
 }
 /** Callback for when an image is available. */
@@ -81,6 +87,13 @@ static void OnImage(const LEAP_IMAGE_EVENT* imageEvent) {
 }
 int main(int argc, char** argv) {
 
+    // Open log file
+    if (argc < 2) {
+        printf("Please enter a file name.\n");
+        exit(1);
+    }
+    logFile = fopen(argv[1], "w");
+
     //Set callback function pointers
     ConnectionCallbacks.on_connection = &OnConnect;
     ConnectionCallbacks.on_device_found = &OnDevice;
@@ -90,6 +103,9 @@ int main(int argc, char** argv) {
     LeapSetPolicyFlags(*connection, eLeapPolicyFlag_Images, 0);
     printf("Press Enter to exit program.\n");
     getchar();
+
+    // Cleanup
+    fclose(logFile);
     CloseConnection();
     DestroyConnection();
     return 0;
