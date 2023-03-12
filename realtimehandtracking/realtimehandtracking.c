@@ -35,6 +35,9 @@ int gettimeofday(struct timeval* tp, struct timezone* tzp)
 #include "LeapC.h"
 #include "ExampleConnection.h"
 int64_t lastFrameID = 0; //The last frame received
+
+FILE *logFile;
+
  /** Callback for when the connection opens. */
 static void OnConnect() {
     printf("Connected.\n");
@@ -47,6 +50,7 @@ static void OnDevice(const LEAP_DEVICE_INFO* props) {
 static void OnFrame(const LEAP_TRACKING_EVENT* frame) {
     if (frame->info.frame_id % 60 == 0)
         printf("Frame %lli with %i hands.\n", (long long int)frame->info.frame_id, frame->nHands);
+
     for (uint32_t h = 0; h < frame->nHands; h++) {
         LEAP_HAND* hand = &frame->pHands[h];
         struct timeval ts;
@@ -76,6 +80,7 @@ static void OnImage(const LEAP_IMAGE_EVENT* imageEvent) {
         (long long int)imageEvent->image[0].properties.height * 2);
 }
 int main(int argc, char** argv) {
+
     //Set callback function pointers
     ConnectionCallbacks.on_connection = &OnConnect;
     ConnectionCallbacks.on_device_found = &OnDevice;
