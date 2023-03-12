@@ -30,6 +30,7 @@ int gettimeofday(struct timeval* tp, struct timezone* tzp)
 }
 #else
 #include <unistd.h>
+#include <sys/time.h>
 #endif
 #include "LeapC.h"
 #include "ExampleConnection.h"
