@@ -55,19 +55,33 @@ static void OnFrame(const LEAP_TRACKING_EVENT* frame) {
         LEAP_HAND* hand = &frame->pHands[h];
         struct timeval ts;
         gettimeofday(&ts, NULL); // return value can be ignored
+
         fprintf(logFile, "Timestamp : %ld sec %ld usec\n", ts.tv_sec, ts.tv_usec);
+        
         fprintf(logFile, "Hand id %i: %s\n",
             hand->id,
             (hand->type == eLeapHandType_Left ? "left" : "right"));
+
+        for(uint32_t fing = 0; fing < 5; fing++) {
+            fprintf(logFile, "Finger id:%i",hand->digits[fing].finger_id);
+
+            for(uint32_t fbone = 0; fbone < 4; fbone++){
+                fprintf(logFile, "(%f,%f,%f,%f,%f,%f)",
+                hand->digits[fing].bones[fbone].prev_joint.x,
+                hand->digits[fing].bones[fbone].prev_joint.y,
+                hand->digits[fing].bones[fbone].prev_joint.z,
+                hand->digits[fing].bones[fbone].next_joint.x,
+                hand->digits[fing].bones[fbone].next_joint.y,
+                hand->digits[fing].bones[fbone].next_joint.z);
+            }
+            fprintf(logFile, "\n");
+        }
+        
         fprintf(logFile, "Palm: %f, %f, %f\n",
             hand->palm.position.x,
             hand->palm.position.y,
             hand->palm.position.z);
-        fprintf(logFile, "Index: %f, %f, %f\n",
-            hand->index.distal.next_joint.x,
-            hand->index.distal.next_joint.y,
-            hand->index.distal.next_joint.z);
-        /*
+
         fprintf(logFile, "Arm: %f, %f, %f, %f, %f, %f\n",
             hand->arm.prev_joint.x,
             hand->arm.prev_joint.y,
@@ -75,7 +89,7 @@ static void OnFrame(const LEAP_TRACKING_EVENT* frame) {
             hand->arm.next_joint.x,
             hand->arm.next_joint.y,
             hand->arm.next_joint.z);
-        */
+        
     }
 }
 /** Callback for when an image is available. */
