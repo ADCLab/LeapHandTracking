@@ -8,6 +8,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef _WIN32
 #include <Windows.h>
 #include <stdint.h>
@@ -32,6 +33,10 @@ int gettimeofday(struct timeval* tp, struct timezone* tzp)
 #include <unistd.h>
 #include <sys/time.h>
 #endif
+
+#include <curl/curl.h>
+#include <cJSON.h>
+
 #include "LeapC.h"
 #include "ExampleConnection.h"
 int64_t lastFrameID = 0; //The last frame received
@@ -99,6 +104,97 @@ static void OnImage(const LEAP_IMAGE_EVENT* imageEvent) {
         (long long int)imageEvent->image[0].properties.width *
         (long long int)imageEvent->image[0].properties.height * 2);
 }
+
+
+typedef struct {
+  char *response;
+  size_t size;
+
+} memory;
+ 
+static size_t write_data(void *data, size_t size, size_t nmemb, void *clientp)
+{
+    size_t realsize = size * nmemb;
+    memory *mem = (memory *)clientp;
+
+    char *ptr = realloc(mem->response, mem->size + realsize + 1);
+    if(ptr == NULL)
+        return 0;  /* out of memory! */
+
+    mem->response = ptr;
+    memcpy(&(mem->response[mem->size]), data, realsize);
+    mem->size += realsize;
+    mem->response[mem->size] = 0;
+
+    return realsize;
+}
+
+typedef struct {
+    uint32_t airspace_state;
+    uint32_t compass;
+    uint32_t decision_state;
+    uint32_t departure_index;
+    uint32_t destination_index;
+    uint32_t flight_start_time;
+    double latitude;
+    double longitude;
+    uint32_t pre_trial;
+    uint32_t reset_user_display;
+    uint32_t reset_vitals_display;
+    uint32_t sequence;
+    uint32_t study_stage;
+    uint32_t time_to_destination;
+    uint32_t user_id;
+    uint32_t vitals_state;
+
+} flaskData;
+
+flaskData parseFlaskData(char* url) {
+
+    CURL *curl_handle;
+    CURLcode res;
+    memory chunk;
+
+    curl_handle = curl_easy_init();
+
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+    curl_easy_setopt(curl_handle, CURLOPT_URL, "http://ip.jsontest.com/"); // url for testing, to be changed.
+    res = curl_easy_perform(curl_handle);
+    curl_easy_cleanup(curl_handle);
+
+    printf("%s", chunk.response);
+
+    cJSON *json = cJSON_Parse(chunk.response)->child;
+    flaskData data;
+    data.airspace_state = json->valueint;
+    json = json->next;
+    data.compass = json->valueint;
+    json = json->next;
+    data.decision_state = json->valueint;
+    json = json->next;
+    data.departure_index = json->valueint;
+    json = json->next;
+    data.destination_index = json->valueint;
+    json = json->next;
+    data.flight_start_time = json->valueint;
+    data.latitude = json->valuedouble;
+    json = json->next;
+    data.longitude = json->valuedouble;
+    json = json->next;
+    data.pre_trial = json->valueint;
+    json = json->next;
+    data.reset_user_display = json->valueint;
+    json = json->next;
+    data.reset_vitals_display = json->valueint;
+    json = json->next;
+    data.sequence = json->valueint;
+
+    cJSON_Delete(json);
+
+    return data;
+}
+
 int main(int argc, char** argv) {
 
     // Open log file

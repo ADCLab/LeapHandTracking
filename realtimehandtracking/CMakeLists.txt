@@ -70,15 +70,19 @@ target_include_directories(
 	PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR})
 
-# Add targets for each sample file.
-function(add_sample sample_name sample_source_file)
 
-  add_executable(${sample_name} ${sample_source_file})
-  set_property(TARGET ${sample_name} PROPERTY FOLDER "HAI ONR")
-  target_link_libraries(${sample_name} PUBLIC libExampleConnection)
+# Add Handtracking
+add_executable("RealTimeHandTracking" "realtimehandtracking.c")
+set_property(TARGET "RealTimeHandTracking" PROPERTY FOLDER "HAI ONR")
+target_link_libraries("RealTimeHandTracking" PUBLIC libExampleConnection)
 
-endfunction()
+# Libcurl
+find_package(CURL REQUIRED)
+target_link_libraries("RealTimeHandTracking" PUBLIC CURL::libcurl)
 
-
-add_sample("RealTimeHandTracking" "realtimehandtracking.c")
-
+# cJSON
+add_library(
+	cJSON
+	OBJECT
+	"cJSON.c")
+target_link_libraries("RealTimeHandTracking" PUBLIC cJSON)
