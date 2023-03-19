@@ -97,13 +97,6 @@ static void OnFrame(const LEAP_TRACKING_EVENT* frame) {
         
     }
 }
-/** Callback for when an image is available. */
-static void OnImage(const LEAP_IMAGE_EVENT* imageEvent) {
-    printf("Received image set for frame %lli with size %lli.\n",
-        (long long int)imageEvent->info.frame_id,
-        (long long int)imageEvent->image[0].properties.width *
-        (long long int)imageEvent->image[0].properties.height * 2);
-}
 
 
 typedef struct {
