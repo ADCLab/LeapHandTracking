@@ -123,85 +123,81 @@ static size_t write_data(void *data, size_t size, size_t nmemb, void *clientp)
 }
 
 typedef struct {
-    uint32_t airspace_state;
-    uint32_t compass;
-    uint32_t decision_state;
-    uint32_t departure_index;
-    uint32_t destination_index;
-    uint32_t flight_start_time;
+    char userId[100];
+    uint32_t sequence;
+    uint32_t studyStage;
+    char destinationIndex[100];
+    char departureIndex[100];
+    uint32_t decisionState;
+    uint32_t vitalsState;
+    uint32_t airspaceState;
+    uint32_t flightStartTime;
+    uint32_t resetUserDisplay;
+    uint32_t resetVitalsDisplay;
+    uint32_t timeToDestination;
+    uint32_t preTrial;
     double latitude;
     double longitude;
-    uint32_t pre_trial;
-    uint32_t reset_user_display;
-    uint32_t reset_vitals_display;
-    uint32_t sequence;
-    uint32_t study_stage;
-    uint32_t time_to_destination;
-    uint32_t user_id;
-    uint32_t vitals_state;
+    uint32_t compass;
 
 } flaskData;
 
-flaskData parseFlaskData(char* url) {
+int getFlaskData(char* url, flaskData* data) {
 
+    // Get raw data from api
     CURL *curl_handle;
     CURLcode res;
     memory chunk;
 
     curl_handle = curl_easy_init();
-
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
-    curl_easy_setopt(curl_handle, CURLOPT_URL, "http://ip.jsontest.com/"); // url for testing, to be changed.
+    curl_easy_setopt(curl_handle, CURLOPT_URL, "http://127.0.0.0:8080/var");
     res = curl_easy_perform(curl_handle);
     curl_easy_cleanup(curl_handle);
 
-    printf("%s", chunk.response);
+    if (chunk.response == NULL) {
+        return 1;
+    }
 
-    cJSON *json = cJSON_Parse(chunk.response)->child;
-    flaskData data;
-    data.airspace_state = json->valueint;
-    json = json->next;
-    data.compass = json->valueint;
-    json = json->next;
-    data.decision_state = json->valueint;
-    json = json->next;
-    data.departure_index = json->valueint;
-    json = json->next;
-    data.destination_index = json->valueint;
-    json = json->next;
-    data.flight_start_time = json->valueint;
-    data.latitude = json->valuedouble;
-    json = json->next;
-    data.longitude = json->valuedouble;
-    json = json->next;
-    data.pre_trial = json->valueint;
-    json = json->next;
-    data.reset_user_display = json->valueint;
-    json = json->next;
-    data.reset_vitals_display = json->valueint;
-    json = json->next;
-    data.sequence = json->valueint;
+    // Parse json into struct
+    cJSON *json = cJSON_Parse(chunk.response);
+
+    strcpy(data->userId, cJSON_GetObjectItem(json, "user-id")->valuestring);
+    //data->sequence = cJSON_GetObjectItem(json, "sequence")->valueint; 
+    data->studyStage = cJSON_GetObjectItem(json, "study-stage")->valueint; 
+    //strcpy(data->destinationIndex, cJSON_GetObjectItem(json, "destination-index")->valuestring);
+    //strcpy(data->departureIndex, cJSON_GetObjectItem(json, "departure-index")->valuestring);
+    //data->decisionState = cJSON_GetObjectItem(json, "decision-state")->valueint; 
+    //data->vitalsState = cJSON_GetObjectItem(json, "vitals-state")->valueint; 
+    //data->airspaceState = cJSON_GetObjectItem(json, "airspace-state")->valueint; 
+    //data->flightStartTime = cJSON_GetObjectItem(json, "flight-start-time")->valueint; 
+    //data->resetUserDisplay = cJSON_GetObjectItem(json, "reset-user-display")->valueint; 
+    //data->timeToDestination = cJSON_GetObjectItem(json, "time-to-destination")->valueint; 
+    //data->preTrial = cJSON_GetObjectItem(json, "pre-trial")->valueint; 
+    //data->latitude = cJSON_GetObjectItem(json, "latitude")->valuedouble; 
+    //data->longitude = cJSON_GetObjectItem(json, "longitude")->valuedouble; 
+    //data->compass = cJSON_GetObjectItem(json, "compass")->valueint; 
 
     cJSON_Delete(json);
 
-    return data;
+    return 0;
 }
 
 int main(int argc, char** argv) {
 
-    // Open log file
-    if (argc < 2) {
-        printf("Please enter a file name.\n");
-        exit(1);
-    }
-    logFile = fopen(argv[1], "w");
+    // Get the log file
+    flaskData data;
+    while (getFlaskData("", &data) == 1) {}
+
+    char filename[200] = "";
+    sprintf(filename, "%s%d", data.userId, data.studyStage);
+    logFile = fopen(filename, "w");
 
     //Set callback function pointers
     ConnectionCallbacks.on_connection = &OnConnect;
     ConnectionCallbacks.on_device_found = &OnDevice;
     ConnectionCallbacks.on_frame = &OnFrame;
-    //ConnectionCallbacks.on_image = &OnImage;
     LEAP_CONNECTION* connection = OpenConnection();
     LeapSetPolicyFlags(*connection, eLeapPolicyFlag_Images, 0);
     printf("Press Enter to exit program.\n");
