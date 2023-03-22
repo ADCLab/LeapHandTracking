@@ -1,3 +1,3 @@
 #!/bin/bash
 CUR_DIR=$(pwd)
-${CUR_DIR}/build/Release/RealTimeHandTracking $1
+${CUR_DIR}/build/Release/RealTimeHandTracking
