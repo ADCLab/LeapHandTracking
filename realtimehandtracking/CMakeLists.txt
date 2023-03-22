@@ -4,6 +4,7 @@ project(ONR_HAI_HandTracking VERSION "0.0.0" LANGUAGES C)
 
 if (WIN32)
 	set(ULTRALEAP_PATH_ROOT "$ENV{ProgramFiles}/Ultraleap")
+	list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES ".dll.a" ".a")
 elseif (UNIX)
 	set(ULTRALEAP_PATH_ROOT "/usr/share/doc/ultraleap-hand-tracking-service/lib/cmake/LeapSDK")
 endif()
