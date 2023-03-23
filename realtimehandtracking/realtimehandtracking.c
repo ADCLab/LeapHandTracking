@@ -104,9 +104,8 @@ typedef struct {
   size_t size;
 
 } memory;
- 
-static size_t write_data(void *data, size_t size, size_t nmemb, void *clientp)
-{
+
+size_t write_data(void *data, size_t size, size_t nmemb, void *clientp) {
     size_t realsize = size * nmemb;
     memory *mem = (memory *)clientp;
 
@@ -142,12 +141,12 @@ typedef struct {
 
 } flaskData;
 
-int getFlaskData(char* url, flaskData* data) {
+int getFlaskData(flaskData* data) {
 
     // Get raw data from api
     CURL *curl_handle;
     CURLcode res;
-    memory chunk;
+    memory chunk = {0};
 
     curl_handle = curl_easy_init();
     curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
@@ -179,6 +178,7 @@ int getFlaskData(char* url, flaskData* data) {
     //data->longitude = cJSON_GetObjectItem(json, "longitude")->valuedouble; 
     //data->compass = cJSON_GetObjectItem(json, "compass")->valueint; 
 
+    free(chunk.response);
     cJSON_Delete(json);
 
     return 0;
@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
 
     // Get the log file
     flaskData data;
-    while (getFlaskData("", &data) == 1) {}
+    while (getFlaskData(&data) == 1) {}
 
     char filename[200] = "";
     sprintf(filename, "%s%d", data.userId, data.studyStage);
