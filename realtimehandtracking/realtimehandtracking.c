@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #ifdef _WIN32
 #include <Windows.h>
 #include <stdint.h>
@@ -39,7 +40,6 @@ int gettimeofday(struct timeval* tp, struct timezone* tzp)
 
 #include "LeapC.h"
 #include "ExampleConnection.h"
-int64_t lastFrameID = 0; //The last frame received
 
 FILE *logFile;
 
@@ -105,13 +105,15 @@ typedef struct {
 
 } memory;
 
-size_t write_data(void *data, size_t size, size_t nmemb, void *clientp) {
+static size_t write_data(void *data, size_t size, size_t nmemb, void *clientp) {
+
     size_t realsize = size * nmemb;
     memory *mem = (memory *)clientp;
 
     char *ptr = realloc(mem->response, mem->size + realsize + 1);
-    if(ptr == NULL)
+    if(ptr == NULL) {
         return 0;  /* out of memory! */
+    }
 
     mem->response = ptr;
     memcpy(&(mem->response[mem->size]), data, realsize);
@@ -184,6 +186,48 @@ int getFlaskData(flaskData* data) {
     return 0;
 }
 
+typedef struct {
+    float a;
+    float b;
+    float c;
+    float d;
+} Plane; // ax + by + cz + d = 0
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+} Vector;
+
+Plane calculatePlane(Vector p1, Vector p2, Vector p3) {
+
+    Vector u;
+    u.x = p1.x - p2.x;
+    u.y = p1.y - p2.y;
+    u.z = p1.z - p2.z;
+
+    Vector v;
+    v.x = p1.x - p3.x;
+    v.y = p1.y - p3.y;
+    v.z = p1.z - p3.z;
+
+    Vector n;
+    n.x = u.y * v.z - u.z * v.y;
+    n.y = u.z * v.x - u.x * v.z;
+    n.z = u.x * v.y - u.y * v.x;
+
+    Plane plane;
+    plane.a = n.x;
+    plane.b = n.y;
+    plane.c = n.z;
+    plane.d = n.x * -p1.x + n.y * -p1.y + n.z * -p1.z;
+
+    return plane;
+}
+float distanceFromPlane(Plane plane, Vector p) {
+    return fabs(plane.a * p.x + plane.b * p.y + plane.c * p.z + plane.d) / sqrt(plane.a * plane.a + plane.b * plane.b + plane.c * plane.c);
+}
+
 int main(int argc, char** argv) {
 
     // Get the log file
@@ -192,6 +236,7 @@ int main(int argc, char** argv) {
 
     char filename[200] = "";
     sprintf(filename, "%s%d", data.userId, data.studyStage);
+    strcat(filename, ".txt");
     logFile = fopen(filename, "w");
 
     //Set callback function pointers
@@ -209,4 +254,3 @@ int main(int argc, char** argv) {
     DestroyConnection();
     return 0;
 }
-//End-of-Sample
