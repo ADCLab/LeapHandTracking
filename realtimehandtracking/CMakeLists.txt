@@ -76,6 +76,7 @@ target_include_directories(
 add_executable("RealTimeHandTracking" "realtimehandtracking.c")
 set_property(TARGET "RealTimeHandTracking" PROPERTY FOLDER "HAI ONR")
 target_link_libraries("RealTimeHandTracking" PUBLIC libExampleConnection)
+target_link_libraries("RealTimeHandTracking" PUBLIC m)
 
 # Libcurl
 find_package(CURL REQUIRED)
