@@ -242,9 +242,7 @@ int main(int argc, char** argv) {
     time_t rawtime;
     time(&rawtime);
     strftime(date, sizeof(date), "%Y%m%d", localtime(&rawtime));
-    printf("%s\n%s\n%d", data.userId, date, data.studyStage);
     sprintf(filename, "%s_%s_Hands_%d.log", data.userId, date, data.studyStage);
-    strcat(filename, ".txt");
     logFile = fopen(filename, "w");
 
     //Set callback function pointers
