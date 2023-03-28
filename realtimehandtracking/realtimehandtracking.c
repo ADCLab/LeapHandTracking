@@ -43,8 +43,10 @@ int gettimeofday(struct timeval* tp, struct timezone* tzp)
 
 #include "LeapC.h"
 #include "ExampleConnection.h"
+#include "handtracking.h"
 
 FILE *logFile;
+Plane screenPlane;
 
  /** Callback for when the connection opens. */
 static void OnConnect() {
@@ -101,13 +103,6 @@ static void OnFrame(const LEAP_TRACKING_EVENT* frame) {
     }
 }
 
-
-typedef struct {
-  char *response;
-  size_t size;
-
-} memory;
-
 static size_t write_data(void *data, size_t size, size_t nmemb, void *clientp) {
 
     size_t realsize = size * nmemb;
@@ -125,26 +120,6 @@ static size_t write_data(void *data, size_t size, size_t nmemb, void *clientp) {
 
     return realsize;
 }
-
-typedef struct {
-    char userId[100];
-    uint32_t sequence;
-    uint32_t studyStage;
-    char destinationIndex[100];
-    char departureIndex[100];
-    uint32_t decisionState;
-    uint32_t vitalsState;
-    uint32_t airspaceState;
-    uint32_t flightStartTime;
-    uint32_t resetUserDisplay;
-    uint32_t resetVitalsDisplay;
-    uint32_t timeToDestination;
-    uint32_t preTrial;
-    double latitude;
-    double longitude;
-    uint32_t compass;
-
-} flaskData;
 
 int getFlaskData(flaskData* data) {
 
@@ -169,7 +144,7 @@ int getFlaskData(flaskData* data) {
 
     strcpy(data->userId, cJSON_GetObjectItem(json, "user-id")->valuestring);
     //data->sequence = cJSON_GetObjectItem(json, "sequence")->valueint; 
-    data->studyStage = cJSON_GetObjectItem(json, "study-stage")->valueint; 
+    strcpy(data->studyStage, cJSON_GetObjectItem(json, "study-stage")->valuestring); 
     //strcpy(data->destinationIndex, cJSON_GetObjectItem(json, "destination-index")->valuestring);
     //strcpy(data->departureIndex, cJSON_GetObjectItem(json, "departure-index")->valuestring);
     //data->decisionState = cJSON_GetObjectItem(json, "decision-state")->valueint; 
@@ -189,60 +164,24 @@ int getFlaskData(flaskData* data) {
     return 0;
 }
 
-typedef struct {
-    float a;
-    float b;
-    float c;
-    float d;
-} Plane; // ax + by + cz + d = 0
-
-typedef struct {
-    float x;
-    float y;
-    float z;
-} Vector;
-
-Plane calculatePlane(Vector p1, Vector p2, Vector p3) {
-
-    Vector u;
-    u.x = p1.x - p2.x;
-    u.y = p1.y - p2.y;
-    u.z = p1.z - p2.z;
-
-    Vector v;
-    v.x = p1.x - p3.x;
-    v.y = p1.y - p3.y;
-    v.z = p1.z - p3.z;
-
-    Vector n;
-    n.x = u.y * v.z - u.z * v.y;
-    n.y = u.z * v.x - u.x * v.z;
-    n.z = u.x * v.y - u.y * v.x;
-
-    Plane plane;
-    plane.a = n.x;
-    plane.b = n.y;
-    plane.c = n.z;
-    plane.d = n.x * -p1.x + n.y * -p1.y + n.z * -p1.z;
-
-    return plane;
-}
-float distanceFromPlane(Plane plane, Vector p) {
-    return fabs(plane.a * p.x + plane.b * p.y + plane.c * p.z + plane.d) / sqrt(plane.a * plane.a + plane.b * plane.b + plane.c * plane.c);
-}
-
 int main(int argc, char** argv) {
+
+    // Get the plane from the calibration
+    FILE* calibrateFile = fopen("calibrate.txt", "r");
+    int res = fscanf(calibrateFile, "%f%f%f%f", &screenPlane.a, &screenPlane.b, &screenPlane.c, &screenPlane.d);
+
+    // Get the date
+    char date[100] = "";
+    time_t rawtime;
+    time(&rawtime);
+    strftime(date, sizeof(date), "%Y%m%d", localtime(&rawtime));
 
     // Get the log file
     flaskData data;
     while (getFlaskData(&data) == 1) { sleep(0.01); }
 
     char filename[200] = "";
-    char date[100] = "";
-    time_t rawtime;
-    time(&rawtime);
-    strftime(date, sizeof(date), "%Y%m%d", localtime(&rawtime));
-    sprintf(filename, "%s_%s_Hands_%d.log", data.userId, date, data.studyStage);
+    sprintf(filename, "%s_%s_Hands_%s.log", data.userId, date, data.studyStage);
     logFile = fopen(filename, "w");
 
     //Set callback function pointers

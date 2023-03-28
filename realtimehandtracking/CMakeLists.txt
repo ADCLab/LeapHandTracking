@@ -90,3 +90,11 @@ add_library(
 	OBJECT
 	"cJSON.c")
 target_link_libraries("RealTimeHandTracking" PUBLIC cJSON)
+
+# Add Calibration
+add_executable("Calibration" "calibration.c")
+set_property(TARGET "Calibration" PROPERTY FOLDER "HAI ONR")
+target_link_libraries("Calibration" PUBLIC libExampleConnection)
+if (NOT WIN32)
+	target_link_libraries("Calibration" PUBLIC m)
+endif()
