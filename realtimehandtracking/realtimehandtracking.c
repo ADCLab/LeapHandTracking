@@ -232,7 +232,7 @@ int main(int argc, char** argv) {
 
     // Get the log file
     flaskData data;
-    while (getFlaskData(&data) == 1) {}
+    while (getFlaskData(&data) == 1) { sleep(0.01); }
 
     char filename[200] = "";
     sprintf(filename, "%s%d", data.userId, data.studyStage);
