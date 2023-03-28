@@ -13,6 +13,9 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <stdint.h>
+void sleep(unsigned int seconds) {
+    Sleep(seconds * 1000);
+}
 int gettimeofday(struct timeval* tp, struct timezone* tzp)
 {
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
@@ -235,8 +238,11 @@ int main(int argc, char** argv) {
     while (getFlaskData(&data) == 1) { sleep(0.01); }
 
     char filename[200] = "";
-    sprintf(filename, "%s%d", data.userId, data.studyStage);
-    strcat(filename, ".txt");
+    char date[100] = "";
+    time_t rawtime;
+    time(&rawtime);
+    strftime(date, sizeof(date), "%Y%m%d", localtime(&rawtime));
+    sprintf(filename, "%s_%s_Hands_%d.log", data.userId, date, data.studyStage);
     logFile = fopen(filename, "w");
 
     //Set callback function pointers
