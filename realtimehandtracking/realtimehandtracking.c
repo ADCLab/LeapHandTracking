@@ -13,6 +13,9 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <stdint.h>
+void sleep(unsigned int seconds) {
+    Sleep(seconds * 1000);
+}
 int gettimeofday(struct timeval* tp, struct timezone* tzp)
 {
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
