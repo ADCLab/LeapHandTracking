@@ -238,7 +238,12 @@ int main(int argc, char** argv) {
     while (getFlaskData(&data) == 1) { sleep(0.01); }
 
     char filename[200] = "";
-    sprintf(filename, "%s%d", data.userId, data.studyStage);
+    char date[100] = "";
+    time_t rawtime;
+    time(&rawtime);
+    strftime(date, sizeof(date), "%Y%m%d", localtime(&rawtime));
+    printf("%s\n%s\n%d", data.userId, date, data.studyStage);
+    sprintf(filename, "%s_%s_Hands_%d.log", data.userId, date, data.studyStage);
     strcat(filename, ".txt");
     logFile = fopen(filename, "w");
 
