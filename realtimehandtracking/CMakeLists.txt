@@ -19,36 +19,6 @@ if (UNIX)
     find_package(Threads REQUIRED)    
 endif (UNIX)
 
-add_executable(
-	leapc_example
-	"leapc_main.c")
-
-target_link_libraries(
-	leapc_example
-	PRIVATE
-		LeapSDK::LeapC)
-
-get_target_property(
-	LEAPC_IMPORTED_CONFIG
-	LeapSDK::LeapC
-	IMPORTED_CONFIGURATIONS
-)
-
-get_target_property(
-	LEAPC_SHARED_LIB_PATH
-	LeapSDK::LeapC
-	IMPORTED_LOCATION_${LEAPC_IMPORTED_CONFIG}
-)
-
-add_custom_command(
-	TARGET
-		leapc_example
-	POST_BUILD
-	COMMAND
-		${CMAKE_COMMAND} -E copy
-		${LEAPC_SHARED_LIB_PATH}
-		$<TARGET_FILE_DIR:leapc_example>)
-
 add_library(
 	libExampleConnection
 	OBJECT
