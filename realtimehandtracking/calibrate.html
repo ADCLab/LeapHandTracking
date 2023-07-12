@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    </head> 
+    <body>
+
+        <canvas id="canvas" style="position:absolute; left:0px; top:0px;"></canvas>
+
+        <script type="text/javascript">
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            canvas.width = width;
+            canvas.height = height;            
+
+            // Create random button orders
+            const buttons = Array.from({length:20}, (_,i) => i);
+            for (var i = buttons.length - 1; i > 0; i--) { 
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = buttons[i];
+                buttons[i] = buttons[j];
+                buttons[j] = temp;
+            }
+            let currentButton = 0;
+            let buttonTimes = [];
+
+            // Click event
+            canvas.addEventListener("click", (event) => {
+                event.preventDefault();
+                console.log(event)
+
+                let order = buttons[currentButton];
+                let x = (width / 5) * (order % 5 + 0.5);
+                let y = (height / 4) * (Math.floor(order / 5) + 0.5);
+                let r = (width / 5) / 6;
+
+                if (Math.sqrt(Math.pow(event.clientX - x, 2), Math.pow(event.clientY - y, 2)) < r) {
+                    buttonTimes.push(Date.now());
+                    
+                    if (++currentButton < buttons.length) {
+                        showButton();
+                    } else {
+                        download();
+                    }
+                    
+                }
+                
+            });
+
+
+            // Download
+            function download() {
+                let data = "";
+                data += buttonTimes.length + "\n";
+                for (let i = 0; i < buttonTimes.length; i++) {
+                    data += buttonTimes[i] + "\n";
+                }
+                // https://stackoverflow.com/questions/13405129/create-and-save-a-file-with-javascript
+                let file = new Blob([data], {type: "text/plain"});
+                let a = document.createElement("a");
+                let url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = "calibrate.txt";
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);  
+                }, 0); 
+            }
+
+            function showButton() {
+                
+                ctx.fillStyle = "cyan";
+                ctx.fillRect(0, 0, width, height);
+
+                let order = buttons[currentButton];
+                ctx.fillStyle = "red";
+                
+                let x = (width / 5) * (order % 5 + 0.5);
+                let y = (height / 4) * (Math.floor(order / 5) + 0.5);
+                let r = (width / 5) / 6;
+
+                ctx.beginPath(0);
+                ctx.ellipse(x, y, r, r, 0, 0, 2*Math.PI);
+                ctx.fill();
+            }
+
+            
+
+            showButton();
+            
+        </script>
+    </body>
+</html>
